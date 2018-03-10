@@ -1,4 +1,5 @@
 #!/bin/bash
+# Licensed under the terms of the Apache License, version 2.0.
 
 if [ ! -d "$1" ] || [ ! -d "$1/mission.sqm" ] || [ ! -d "$1/init.sqf" ]
 then
