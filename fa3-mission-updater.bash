@@ -1,30 +1,36 @@
 #!/bin/bash
 # Licensed under the terms of the Apache License, version 2.0.
 
-if [ ! -d "$1" ] || [ ! -d "$1/mission.sqm" ] || [ ! -d "$1/init.sqf" ]
+if [ ! -d "$1" ] || [ ! -e "$1/mission.sqm" ] || [ ! -e "$1/init.sqf" ]
 then
     echo "Please specify the mission folder"
     exit 1
 fi
 
-MISSION_FOLDER=$(readlink -f $1)
+MISSION_FOLDER=$(readlink -f "$1")
 MISSION_NAME=$(basename "$MISSION_FOLDER")
+NEW_MISSION_NAME="$MISSION_NAME.updated"
+
+# Change the working directory to the same as MISSION_FOLDER
+cd $(dirname "$MISSION_FOLDER")
 
 # Clone lastest FA3
-git clone -q https://github.com/Raptoer/F3.git $MISSION_NAME.updated
+echo "Cloning latest FA3 to $PWD/$NEW_MISSION_NAME"
+git clone -q https://github.com/Raptoer/F3.git "$NEW_MISSION_NAME"
 
-# Move into new mission folder
-command pushd $MISSION_NAME.updated > /dev/null
+echo "Working out mission FA3 version"
 
 # Create a new branch to hold the mission files
+command pushd "$NEW_MISSION_NAME" > /dev/null
 git checkout -q -b mission
+command popd > /dev/null
 
 # Clear out the current files and copy in the mission
-rm -r ./* .gitignore
-cp -r "$MISSION_FOLDER"/* .
-cp -r "$MISSION_FOLDER"/.gitignore .gitignore
+rm -r "$NEW_MISSION_NAME"/*
+cp -r "$MISSION_FOLDER"/* "$NEW_MISSION_NAME/"
 
 # Commit the mission
+command pushd "$NEW_MISSION_NAME" > /dev/null
 git add . &> /dev/null
 git commit -m "Mission" &> /dev/null
 
@@ -55,11 +61,15 @@ LIKELY_COMMIT=$(
     done | sort -nr | head -1 | awk '{print $2}'
 )
 
+echo "Mission was likely created from $(git describe --all --always $LIKELY_COMMIT) (commit $LIKELY_COMMIT)"
+echo "Attempting automatic update"
+
 # Create branch with sensible mission history
 git checkout $LIKELY_COMMIT -b updated
-rm -r ./* .gitignore
-cp -r "$MISSION_FOLDER"/* .
-cp -r "$MISSION_FOLDER"/.gitignore .gitignore
+command popd > /dev/null
+rm -r "$NEW_MISSION_NAME"/*
+cp -r "$MISSION_FOLDER"/* "$NEW_MISSION_NAME/"
+command pushd "$NEW_MISSION_NAME" > /dev/null
 git add . &> /dev/null
 git commit -m "Changes" &> /dev/null
 
@@ -70,9 +80,9 @@ git rebase master
 git checkout --theirs mission.sqm
 git add mission.sqm
 
+# Run the mergetool to finish the rebase
+git mergetool
+
 echo "The mission has now been updated as much as can be done automatically."
 echo "Please run git status to find out which files couldn't be automatically updated, and finish the rebase process after fixing the conflicts"
 echo "Remember to delete the .git folder before PBO-ing the updated mission"
-
-# Return
-command popd > /dev/null
