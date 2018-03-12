@@ -47,8 +47,12 @@ CANDIDATE_COMMITS=$(
                 git diff -s --exit-code $COMMIT mission -- $FILE
                 if [ $? -eq 0 ]
                 then
+                    git log -1 --pretty=format:%s $COMMIT | grep -qi "revert"
+                    if [ $? -eq 1 ]
+                    then
                         echo $COMMIT
                         break
+                    fi
                 fi
         done
     done
