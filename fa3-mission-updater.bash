@@ -97,6 +97,12 @@ do
     git add $conflicted
 done
 
+# Use the template version of README.md
+git checkout --ours README.md
+git add README.md
+
+# /Heuristics
+
 # Run the mergetool to finish the rebase
 git mergetool
 
