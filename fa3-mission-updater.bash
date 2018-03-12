@@ -58,7 +58,7 @@ LIKELY_COMMIT=$(
     for COMMIT in $CANDIDATE_COMMITS
     do
         echo $(git log -1 --pretty=format:%ct $COMMIT) $COMMIT
-    done | sort -nr | head -1 | awk '{print $2}'
+    done | sort -nr -k 1 | head -1 | awk '{print $2}'
 )
 
 echo "Mission was likely created from $(git describe --all --always $LIKELY_COMMIT) (commit $LIKELY_COMMIT)"
