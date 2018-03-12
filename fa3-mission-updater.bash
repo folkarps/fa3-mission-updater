@@ -12,7 +12,7 @@ MISSION_NAME=$(basename "$MISSION_FOLDER")
 NEW_MISSION_NAME="$MISSION_NAME.updated"
 
 # Change the working directory to the same as MISSION_FOLDER
-cd $(dirname "$MISSION_FOLDER")
+cd "$(dirname "$MISSION_FOLDER")"
 
 # Clone lastest FA3
 echo "Cloning latest FA3 to $PWD/$NEW_MISSION_NAME"
