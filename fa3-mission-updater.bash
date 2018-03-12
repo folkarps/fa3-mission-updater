@@ -76,9 +76,22 @@ git commit -m "Changes" &> /dev/null
 # Rebase the branch to update to latest version
 git rebase master
 
+# Heuristics
+
 # Use mission version of mission.sqm
 git checkout --theirs mission.sqm
 git add mission.sqm
+
+# Use template version (ours) for adds and deletes
+for conflicted in $(git status --short | grep -E '^AA|^UD|^AU' | awk '{print $2}')
+do
+    git checkout --ours $conflicted
+    git add $conflicted
+done
+for conflicted in $(git status --short | grep -E '^DU' | awk '{print $2}')
+do
+    git add $conflicted
+done
 
 # Run the mergetool to finish the rebase
 git mergetool
