@@ -36,7 +36,7 @@ git commit -m "Mission" &> /dev/null
 
 ## Find the most likely commit this mission was derived from
 # Don't compare ws_fnc to prevent poisoning due to the mission maker updating ws_fnc themselves
-FILES_TO_COMPARE=$(find -type f -iname '*.sqf' -or -iname '*.hpp' -or -iname '*.xml' -or -iname '*.ext' | grep -v 'ws_fnc/')
+FILES_TO_COMPARE=$(find -type f -iname '*.sqf' -or -iname '*.hpp' -or -iname '*.xml' -or -iname '*.ext' | grep -v 'ws_fnc/' | grep -v 'f/cache/')
 CANDIDATE_COMMITS=$(
     for FILE in $FILES_TO_COMPARE
     do
