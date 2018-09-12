@@ -1,6 +1,10 @@
 #!/bin/bash
 # Licensed under the terms of the Apache License, version 2.0.
 
+# Enable "Unofficial Bash Strict Mode" (http://redsymbol.net/articles/unofficial-bash-strict-mode/)
+set -euo pipefail
+IFS=$'\n\t'
+
 if [ ! -d "$1" ] || [ ! -e "$1/mission.sqm" ] || [ ! -e "$1/init.sqf" ]
 then
     echo "Please specify the mission folder"
