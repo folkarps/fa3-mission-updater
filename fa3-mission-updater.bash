@@ -39,25 +39,28 @@ git add . &> /dev/null
 git commit -m "Mission" &> /dev/null
 
 ## Find the most likely commit this mission was derived from
-# Don't compare ws_fnc to prevent poisoning due to the mission maker updating ws_fnc themselves
-FILES_TO_COMPARE=$(find -type f -iname '*.sqf' -or -iname '*.hpp' -or -iname '*.xml' -or -iname '*.ext' | grep -v 'ws_fnc/' | grep -v 'f/cache/')
+FILES_TO_COMPARE=$(find -type f -iname '*.sqf' -or -iname '*.hpp' -or -iname '*.xml' -or -iname '*.ext')
 CANDIDATE_COMMITS=$(
     for FILE in $FILES_TO_COMPARE
     do
-        REV_COMMITS=$(git rev-list --branches=master master -- $FILE)
+        REV_COMMITS=$(git rev-list heads/master -- $FILE)
 
         for COMMIT in $REV_COMMITS
         do
-                git diff -s --exit-code $COMMIT mission -- $FILE
-                if [ $? -eq 0 ]
+            for exclude in "${@:2}"
+            do
+                if [[ $COMMIT = $exclude* ]]
                 then
-                    git log -1 --pretty=format:%s $COMMIT | grep -qi "revert"
-                    if [ $? -eq 1 ]
-                    then
-                        echo $COMMIT
-                        break
-                    fi
+                    continue 2
                 fi
+            done
+
+            git diff -s --exit-code $COMMIT mission -- $FILE
+            if [ $? -eq 0 ]
+            then
+                echo $COMMIT
+                break
+            fi
         done
     done
 )
@@ -68,9 +71,17 @@ LIKELY_COMMIT=$(
         echo $(git log -1 --pretty=format:%ct $COMMIT) $COMMIT
     done | sort -nr -k 1 | head -1 | awk '{print $2}'
 )
-LIKELY_COMMIT_DESC=$(git describe --all --always $LIKELY_COMMIT)
+LIKELY_COMMIT_DESC=$(git describe --always $LIKELY_COMMIT)
 
-echo "Mission was likely created from $LIKELY_COMMIT_DESC (commit $LIKELY_COMMIT)"
+echo "Mission was likely created from $LIKELY_COMMIT_DESC (commit $LIKELY_COMMIT):"
+git log -1 --format=medium $LIKELY_COMMIT
+
+echo -n "Continue? [yn] "
+read PROMPT_RESPONSE
+if [[ $PROMPT_RESPONSE != "y" ]]
+then
+    exit 1
+fi
 
 NEW_MISSION_NAME_COMMIT="$NEW_MISSION_NAME-$LIKELY_COMMIT_DESC"
 echo "Moving workspace from $NEW_MISSION_NAME to $NEW_MISSION_NAME_COMMIT"
