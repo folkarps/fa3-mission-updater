@@ -68,8 +68,17 @@ LIKELY_COMMIT=$(
         echo $(git log -1 --pretty=format:%ct $COMMIT) $COMMIT
     done | sort -nr -k 1 | head -1 | awk '{print $2}'
 )
+LIKELY_COMMIT_DESC=$(git describe --all --always $LIKELY_COMMIT)
 
-echo "Mission was likely created from $(git describe --all --always $LIKELY_COMMIT) (commit $LIKELY_COMMIT)"
+echo "Mission was likely created from $LIKELY_COMMIT_DESC (commit $LIKELY_COMMIT)"
+
+NEW_MISSION_NAME_COMMIT="$NEW_MISSION_NAME-$LIKELY_COMMIT_DESC"
+echo "Moving workspace from $NEW_MISSION_NAME to $NEW_MISSION_NAME_COMMIT"
+command popd > /dev/null
+mv "$NEW_MISSION_NAME" "$NEW_MISSION_NAME_COMMIT"
+NEW_MISSION_NAME="$NEW_MISSION_NAME_COMMIT"
+command pushd "$NEW_MISSION_NAME" > /dev/null
+
 echo "Attempting automatic update"
 
 # Create branch with sensible mission history
