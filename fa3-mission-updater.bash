@@ -102,7 +102,7 @@ git add . &> /dev/null
 git commit -m "Changes" &> /dev/null
 
 # Rebase the branch to update to latest version
-git rebase master
+git rebase master || true
 
 # Heuristics
 
