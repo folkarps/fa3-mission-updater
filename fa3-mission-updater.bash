@@ -40,38 +40,29 @@ git commit -m "Mission" &> /dev/null
 
 ## Find the most likely commit this mission was derived from
 FILES_TO_COMPARE=$(find -type f -iname '*.sqf' -or -iname '*.hpp' -or -iname '*.xml' -or -iname '*.ext')
-CANDIDATE_COMMITS=$(
+REV_COMMITS=$(git rev-list heads/master)
+TEMP_FILE=$(mktemp)
+for COMMIT in $REV_COMMITS
+do
+    for exclude in "${@:2}"
+    do
+        if [[ $COMMIT = $exclude* ]]
+        then
+            continue 2
+        fi
+    done
+
     for FILE in $FILES_TO_COMPARE
     do
-        REV_COMMITS=$(git rev-list heads/master -- $FILE)
-
-        for COMMIT in $REV_COMMITS
-        do
-            for exclude in "${@:2}"
-            do
-                if [[ $COMMIT = $exclude* ]]
-                then
-                    continue 2
-                fi
-            done
-
-            git diff -s --exit-code $COMMIT mission -- $FILE
-            if [ $? -eq 0 ]
-            then
-                echo $COMMIT
-                break
-            fi
-        done
-    done
-)
-# Find the most recent candidate commit
-LIKELY_COMMIT=$(
-    for COMMIT in $CANDIDATE_COMMITS
-    do
-        echo $(git log -1 --pretty=format:%ct $COMMIT) $COMMIT
-    done | sort -nr -k 1 | head -1 | awk '{print $2}'
-)
+        if git diff -s --exit-code $COMMIT mission -- $FILE
+        then
+            echo $COMMIT
+        fi
+    done | uniq -c
+done | sort -nr > $TEMP_FILE
+LIKELY_COMMIT=$(head -1 $TEMP_FILE | awk '{print $2}')
 LIKELY_COMMIT_DESC=$(git describe --always $LIKELY_COMMIT)
+rm $TEMP_FILE
 
 echo "Mission was likely created from $LIKELY_COMMIT_DESC (commit $LIKELY_COMMIT):"
 git log -1 --format=medium $LIKELY_COMMIT
